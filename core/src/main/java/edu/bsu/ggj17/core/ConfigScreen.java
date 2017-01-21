@@ -3,6 +3,7 @@ package edu.bsu.ggj17.core;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import playn.core.Game;
+import react.Connection;
 import react.Slot;
 import react.UnitSignal;
 import react.UnitSlot;
@@ -30,6 +31,7 @@ public class ConfigScreen extends ScreenStack.UIScreen {
 
         root.add(new Label("MIXER").setStyles(Style.COLOR.is(Colors.WHITE)));
         root.add(createMixerSelectionGroup());
+        root.add(new StatusLabel());
 
         root.add(new Button("Back").onClick(new UnitSlot() {
             @Override
@@ -40,27 +42,25 @@ public class ConfigScreen extends ScreenStack.UIScreen {
     }
 
     private Element<?> createMixerSelectionGroup() {
-        Selector selector = new Selector();
+        Selector selector = new Selector().preventDeselection();
         selector.selected.connect(new Slot<Element<?>>() {
             @Override
             public void onEmit(Element<?> element) {
-                game.mixer.update(AudioSystem.getMixer(((MixerCheckBox)element).mixerInfo));
+                if (element!=null) {
+                    game.mixer.update(AudioSystem.getMixer(((MixerCheckBox) element).mixerInfo));
+                } else {
+                    game.mixer.update(null);
+                }
             }
         });
 
-        boolean isFirst = true;
-        Group mixerGroup = new Group(new TableLayout(TableLayout.COL.stretch(), TableLayout.COL.alignLeft()).gaps(0,6));
+        Group mixerGroup = new Group(new TableLayout(TableLayout.COL.stretch(), TableLayout.COL.alignLeft()).gaps(6, 6));
         for (Mixer.Info mixerInfo : makeMixerList()) {
             MixerCheckBox button = new MixerCheckBox(mixerInfo);
-            selector.add(button);
-            if (isFirst) {
-                button.select(true);
-                selector.selected.update(button);
-                isFirst=false;
-            }
-            mixerGroup.add(button);
-            mixerGroup.add(new Label(mixerInfo.getName()).setStyles(Style.COLOR.is(Colors.WHITE)));
+            mixerGroup.add(button,
+                    new Label(mixerInfo.getName()).setStyles(Style.COLOR.is(Colors.WHITE)));
         }
+        selector.add(mixerGroup);
 
         return mixerGroup;
     }
@@ -81,10 +81,41 @@ public class ConfigScreen extends ScreenStack.UIScreen {
         return game;
     }
 
-    final class MixerCheckBox extends CheckBox {
+    private final class MixerCheckBox extends CheckBox {
         public final Mixer.Info mixerInfo;
+
         public MixerCheckBox(Mixer.Info mixerInfo) {
             this.mixerInfo = Preconditions.checkNotNull(mixerInfo);
         }
     }
+
+    private final class StatusLabel extends Label {
+        private final String noAudioMessage = "No audio detected";
+        private Connection connection = null;
+
+        public StatusLabel() {
+            setStyles(Style.COLOR.is(Colors.WHITE));
+            game.mixer.connect(new Slot<Mixer>() {
+                @Override
+                public void onEmit(Mixer mixer) {
+                    mixerChanged();
+                }
+            });
+            mixerChanged();
+        }
+
+        private void mixerChanged() {
+            setText(noAudioMessage);
+            connection = game.pitch.connect(new Slot<Float>() {
+                @Override
+                public void onEmit(Float aFloat) {
+                    if (aFloat != null) {
+                        setText("This mixer should work!");
+                        connection.close();
+                    }
+                }
+            });
+        }
+    }
 }
+

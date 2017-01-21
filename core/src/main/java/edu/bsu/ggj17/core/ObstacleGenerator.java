@@ -11,7 +11,7 @@ public class ObstacleGenerator implements Updateable {
     private static final int MILLIS_BETWEEN_OBSTACLES = 1000;
     private static final Random RANDOM = new Random();
 
-    public final Signal<ObstacleSprite> onGenerate = Signal.create();
+    public final Signal<AbstractObstacleSprite> onGenerate = Signal.create();
 
     private int millisUntilNextSpawn = MILLIS_BETWEEN_OBSTACLES;
     private final GroupLayer target;
@@ -32,10 +32,11 @@ public class ObstacleGenerator implements Updateable {
     }
 
     private void spawnObstacle() {
-        ObstacleSprite obstacleSprite = new ObstacleSprite(plat.assets());
+        AbstractObstacleSprite restSprite =
+                (RANDOM.nextFloat() < 0.5f) ? new EndBarSprite(plat.assets()) : new RestSprite(plat.assets());
         float y = RANDOM.nextFloat() * plat.graphics().viewSize.height();
-        target.addAt(obstacleSprite.layer, plat.graphics().viewSize.width(), y);
-        onGenerate.emit(obstacleSprite);
+        target.addAt(restSprite.layer, plat.graphics().viewSize.width(), y);
+        onGenerate.emit(restSprite);
     }
 
 }

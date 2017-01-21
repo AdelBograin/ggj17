@@ -1,16 +1,16 @@
 package edu.bsu.ggj17.core;
 
-import playn.core.Assets;
+import playn.core.Image;
 import playn.scene.ImageLayer;
 import playn.scene.Layer;
 
-public class ObstacleSprite {
+public abstract class AbstractObstacleSprite {
 
     private static final float SPEED_PPS = 150;
     public final Layer layer;
 
-    public ObstacleSprite(Assets assets) {
-        this.layer = new ImageLayer(assets.getImage("images/quarter-rest.png"));
+    protected AbstractObstacleSprite(Image image) {
+        this.layer = new ImageLayer(image);
         this.layer.setOrigin(Layer.Origin.CENTER);
     }
 
@@ -20,4 +20,5 @@ public class ObstacleSprite {
         this.layer.setTx(newX);
     }
 
+    public abstract boolean isDeadly();
 }

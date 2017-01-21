@@ -23,7 +23,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     private final FlappyPitchGame game;
     private final Value<Float> startingPitch = Value.create(null);
     private PlayerSprite playerSprite;
-    private final List<ObstacleSprite> obstacles = Lists.newArrayList();
+    private final List<AbstractObstacleSprite> obstacles = Lists.newArrayList();
     private final Value<Integer> score = Value.create(0);
 
     private float topPitch;
@@ -190,16 +190,16 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     private final class PlayingState extends AbstractState {
         private final Rectangle playerRect = new Rectangle();
         private final Rectangle otherRect = new Rectangle();
-        private final List<ObstacleSprite> toRemove = Lists.newArrayList();
+        private final List<AbstractObstacleSprite> toRemove = Lists.newArrayList();
         private final ObstacleGenerator generator = new ObstacleGenerator(game.plat, layer);
         private boolean shouldAnimateOnNextChange = true;
         private int elapsedTimeWithoutPitch;
 
         PlayingState() {
-            generator.onGenerate.connect(new Slot<ObstacleSprite>() {
+            generator.onGenerate.connect(new Slot<AbstractObstacleSprite>() {
                 @Override
-                public void onEmit(ObstacleSprite obstacleSprite) {
-                    obstacles.add(obstacleSprite);
+                public void onEmit(AbstractObstacleSprite sprite) {
+                    obstacles.add(sprite);
                 }
             });
         }
@@ -216,7 +216,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
             }
             playerRect.setBounds(playerSprite.layer.tx(), playerSprite.layer.ty(), playerSprite.layer.width(),
                     playerSprite.layer.height());
-            for (ObstacleSprite obstacle : obstacles) {
+            for (AbstractObstacleSprite obstacle : obstacles) {
                 obstacle.update(deltaMS);
                 if (obstacle.layer.tx() + obstacle.layer.width() < 0) {
                     toRemove.add(obstacle);
@@ -224,12 +224,17 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
                 otherRect.setBounds(obstacle.layer.tx(), obstacle.layer.ty(), obstacle.layer.width(),
                         obstacle.layer.height());
                 if (playerRect.intersects(otherRect)) {
-                    toRemove.add(obstacle);
-                    setState(new GraceState(this));
+                    if (obstacle.isDeadly()) {
+                        setState(new DeathState());
+                    } else {
+                        toRemove.add(obstacle);
+                        setState(new GraceState(this));
+                    }
+
                 }
             }
             while (!toRemove.isEmpty()) {
-                ObstacleSprite sprite = toRemove.remove(0);
+                AbstractObstacleSprite sprite = toRemove.remove(0);
                 obstacles.remove(sprite);
                 layer.remove(sprite.layer);
             }
@@ -279,7 +284,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
             if (root==null) {
                 root = iface.createRoot(AxisLayout.vertical(), SimpleStyles.newSheet(game.plat.graphics()), layer)
                         .setSize(game.plat.graphics().viewSize);
-                root.add(new Label("YOU DIED"), new Button("Play again").onClick(new Slot<Button>() {
+                root.add(new Label("Now you must repeat!"), new Button("Play again").onClick(new Slot<Button>() {
                     @Override
                     public void onEmit(Button button) {
                         done.emit(EndOption.PLAY_AGAIN);

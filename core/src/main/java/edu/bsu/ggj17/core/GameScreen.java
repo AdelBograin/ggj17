@@ -18,12 +18,14 @@ import javax.sound.sampled.*;
 public class GameScreen extends ScreenStack.UIScreen {
 
     private final FlappyPitchGame game;
-    private Mixer mixer;
+    private final Mixer mixer;
     private Value<Float> pitch = Value.create(0f);
 
     public GameScreen(FlappyPitchGame game) {
         super(game.plat);
         this.game = game;
+        this.mixer = game.mixer.get();
+
         // create and add background image layer
         Image bgImage = game.plat.assets().getImage("images/bg.png");
         ImageLayer bgLayer = new ImageLayer(bgImage);
@@ -58,13 +60,6 @@ public class GameScreen extends ScreenStack.UIScreen {
     }
 
     private void initializeAudio() {
-        final Mixer.Info[] mixers = AudioSystem.getMixerInfo();
-        for (final Mixer.Info mixerInfo : mixers) {
-            if (AudioSystem.getMixer(mixerInfo).getTargetLineInfo().length != 0) {
-                this.mixer = AudioSystem.getMixer(mixerInfo);
-                break;
-            }
-        }
         float sampleRate = 44100;
         int bufferSize = 1024;
         int overlap = 0;

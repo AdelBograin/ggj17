@@ -15,13 +15,14 @@ import tripleplay.game.ScreenStack;
 
 import javax.sound.sampled.*;
 
-public class GameScreen extends ScreenStack.Screen {
+public class GameScreen extends ScreenStack.UIScreen {
 
     private final FlappyPitchGame game;
     private Mixer mixer;
     private Value<Float> pitch = Value.create(0f);
 
     public GameScreen(FlappyPitchGame game) {
+        super(game.plat);
         this.game = game;
         // create and add background image layer
         Image bgImage = game.plat.assets().getImage("images/bg.png");
@@ -33,9 +34,23 @@ public class GameScreen extends ScreenStack.Screen {
         final PlayerSprite sprite = new PlayerSprite(game);
         layer.addAt(sprite.layer(), 0, game.plat.graphics().viewSize.height() / 2);
         pitch.connect(new Slot<Float>() {
+            private boolean shouldAnimateOnNextChange = true;
+
             @Override
             public void onEmit(Float newPitch) {
-                sprite.layer().setTy(newPitch);
+                if (shouldAnimateOnNextChange) {
+                    shouldAnimateOnNextChange = false;
+                    iface.anim.tweenY(sprite.layer())
+                            .to(newPitch)
+                            .in(200)
+                            .then()
+                            .action(new Runnable() {
+                                @Override
+                                public void run() {
+                                    shouldAnimateOnNextChange = true;
+                                }
+                            });
+                }
             }
         });
 

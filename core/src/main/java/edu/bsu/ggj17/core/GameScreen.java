@@ -24,6 +24,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     private final Value<Float> startingPitch = Value.create(null);
     private PlayerSprite playerSprite;
     private final List<ObstacleSprite> obstacles = Lists.newArrayList();
+    private final Value<Integer> score = Value.create(0);
 
     private float topPitch;
     private float bottomPitch;
@@ -36,6 +37,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         makeDefaultBackground();
         configurePlayerSprite();
         makeDebugHUD();
+        makeHud();
 
         setState(countdownState);
         game.pitch.connect(new Slot<Float>() {
@@ -72,7 +74,13 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         root.add(new Group(AxisLayout.vertical())
                 .add(new PitchLabel(),
                         new StartingPitchLabel())
-                .setConstraint(AbsoluteLayout.uniform(BoxPoint.TR)));
+                .setConstraint(AbsoluteLayout.uniform(BoxPoint.BR)));
+    }
+
+    private void makeHud() {
+        Root root = iface.createRoot(new AbsoluteLayout(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+                .setSize(game.plat.graphics().viewSize);
+        root.add(new ScoreLabel().setConstraint(AbsoluteLayout.uniform(BoxPoint.TR)));
     }
 
     @Override
@@ -199,6 +207,8 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         @Override
         public void update(int deltaMS) {
             generator.update(deltaMS);
+            score.update(score.get() + deltaMS);
+
             elapsedTimeWithoutPitch += deltaMS;
             if (elapsedTimeWithoutPitch >= MAX_ELAPSED_TIME_WITHOUT_DEATH && !game.immortal) {
                 setState(new DeathState());
@@ -337,6 +347,18 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
                         setText("Starting: " + String.format("%2f", aFloat));
                         connection.close();
                     }
+                }
+            });
+        }
+    }
+
+    private final class ScoreLabel extends Label {
+        ScoreLabel() {
+            super("Score: 0");
+            score.connect(new Slot<Integer>() {
+                @Override
+                public void onEmit(Integer integer) {
+                    setText("Score: " + (integer / 100));
                 }
             });
         }

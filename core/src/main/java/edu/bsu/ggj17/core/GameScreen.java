@@ -129,7 +129,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     @SuppressWarnings("FieldCanBeLocal")
     private final AbstractState countdownState = new AbstractState() {
         private Root startingMessageHud;
-        private Label countdownLabel = new Label();
+        private Label countdownLabel = new Label("Get Ready...");
         private int timeRemaining;
 
         @Override
@@ -138,12 +138,11 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
             if (timeRemaining <= 0) {
                 setState(new StartPitchState());
             }
-            countdownLabel.setText(timeRemaining + "");
         }
 
         @Override
         public void onEnter() {
-            timeRemaining = 2000;
+            timeRemaining = 1500;
             if (startingMessageHud == null) {
                 startingMessageHud = iface.createRoot(new AbsoluteLayout(), GameStyles.newSheet(game.plat.graphics()), layer)
                         .setSize(game.plat.graphics().viewSize);

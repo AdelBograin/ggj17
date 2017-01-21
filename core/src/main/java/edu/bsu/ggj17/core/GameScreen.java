@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import playn.core.Game;
 import playn.core.Image;
 import playn.scene.ImageLayer;
+import pythagoras.f.MathUtil;
 import pythagoras.f.Rectangle;
 import react.*;
 import tripleplay.game.ScreenStack;
@@ -214,6 +215,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
                         obstacle.layer.height());
                 if (playerRect.intersects(otherRect)) {
                     toRemove.add(obstacle);
+                    setState(new GraceState(this));
                 }
             }
             while (!toRemove.isEmpty()) {
@@ -283,6 +285,30 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         }
 
 
+    }
+
+    private final class GraceState extends AbstractState{
+
+        private final State previous;
+
+        GraceState(State previous) {
+            this.previous = previous;
+        }
+
+        @Override
+        public void onEnter() {
+            iface.anim.tweenRotation(playerSprite.layer)
+                    .from(0)
+                    .to(MathUtil.TWO_PI)
+                    .in(1000)
+                    .then()
+                    .action(new Runnable() {
+                        @Override
+                        public void run() {
+                            setState(previous);
+                        }
+                    });
+        }
     }
 
     private final class PitchLabel extends Label {

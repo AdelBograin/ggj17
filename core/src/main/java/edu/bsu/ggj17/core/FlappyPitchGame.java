@@ -1,6 +1,5 @@
 package edu.bsu.ggj17.core;
 
-import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import playn.core.Image;
 import playn.core.Platform;
 import playn.scene.ImageLayer;
@@ -18,6 +17,7 @@ public class FlappyPitchGame extends SceneGame {
         bgLayer.setSize(plat.graphics().viewSize);
         rootLayer.add(bgLayer);
 
-        PitchDetectionHandler pitch;
+        PlayerSprite sprite = new PlayerSprite(this);
+        rootLayer.addAt(sprite.layer(), 0, plat.graphics().viewSize.height()/2);
     }
 }

@@ -7,7 +7,6 @@ import playn.scene.ImageLayer;
 import pythagoras.f.Rectangle;
 import react.Connection;
 import react.Slot;
-import react.UnitSlot;
 import react.Value;
 import tripleplay.game.ScreenStack;
 import tripleplay.ui.Group;
@@ -24,81 +23,57 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
 
     private final FlappyPitchGame game;
     private final Value<Float> startingPitch = Value.create(null);
+    private PlayerSprite playerSprite;
+    private final List<ObstacleSprite> obstacles = Lists.newArrayList();
+
     private float topPitch;
     private float bottomPitch;
-    private PlayerSprite playerSprite;
-
-    private final List<ObstacleSprite> obstacles = Lists.newArrayList();
+    private State state;
 
     public GameScreen(final FlappyPitchGame game) {
         super(game.plat);
         this.game = game;
 
+        makeDefaultBackground();
+        configurePlayerSprite();
+        makeDebugHUD();
+        generateObstacles();
+
+        setState(countdownState);
+        game.pitch.connect(new Slot<Float>() {
+            @Override
+            public void onEmit(Float newPitch) {
+                state.pitchChanged(newPitch);
+            }
+        });
+    }
+
+    private void makeDefaultBackground() {
         Image bgImage = game.plat.assets().getImage("images/bg.png");
         ImageLayer bgLayer = new ImageLayer(bgImage);
         bgLayer.setSize(game.plat.graphics().viewSize);
         layer.add(bgLayer);
+    }
 
+    private void configurePlayerSprite() {
         playerSprite = new PlayerSprite(game);
         layer.addAt(playerSprite.layer, 50, game.plat.graphics().viewSize.height() / 2);
-        game.pitch.connect(new Slot<Float>() {
-            private boolean shouldAnimateOnNextChange = true;
+    }
 
-            @Override
-            public void onEmit(Float newPitch) {
-                if (newPitch!=null) {
-                    if (startingPitch.get()==null) {
-                        startingPitch.update(newPitch);
-                        topPitch = newPitch + 100;
-                        bottomPitch = newPitch - 100;
-                    }
-                    if (shouldAnimateOnNextChange) {
-                        shouldAnimateOnNextChange = false;
-
-                        float screenHeight = game.plat.graphics().viewSize.height();
-                        float pitchWidth = topPitch - bottomPitch;
-                        float pitchPercent = clamp((newPitch - bottomPitch) / pitchWidth);
-                        float newY = screenHeight - (screenHeight * pitchPercent);
-
-                        iface.anim.tweenY(playerSprite.layer)
-                                .to(newY)
-                                .in(200)
-                                .then()
-                                .action(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        shouldAnimateOnNextChange = true;
-                                    }
-                                });
-                    }
-                }
-            }
-
-            private float clamp(float value) {
-                return Math.max(0, Math.min(1.0f, value));
-            }
-        });
-
-        makeStartingMessageHUD();
-        makeDebugHUD();
-
-        for (int y=10; y<game.plat.graphics().viewSize.height(); y+= 95) {
+    private void generateObstacles() {
+        for (int y = 10; y < game.plat.graphics().viewSize.height(); y += 95) {
             ObstacleSprite obstacleSprite = new ObstacleSprite(game.plat.graphics());
             obstacles.add(obstacleSprite);
             layer.addAt(obstacleSprite.layer, game.plat.graphics().viewSize.width(), y);
         }
     }
 
-    private void makeStartingMessageHUD() {
-        final Root startingMessageHud = iface.createRoot(new AbsoluteLayout(), SimpleStyles.newSheet(game.plat.graphics()), layer)
-                .setSize(game.plat.graphics().viewSize);
-        startingMessageHud.add(new Label("Make a sound to begin").setConstraint(AbsoluteLayout.uniform(BoxPoint.CENTER)));
-        startingPitch.connect(new UnitSlot() {
-            @Override
-            public void onEmit() {
-                startingMessageHud.setVisible(false);
-            }
-        });
+    private void setState(State newState) {
+        if (this.state != null) {
+            this.state.onExit();
+        }
+        this.state = newState;
+        this.state.onEnter();
     }
 
     private void makeDebugHUD() {
@@ -112,32 +87,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
 
     @Override
     public void update(int deltaMS) {
-        if (startingPitch.get() != null) {
-            doUpdateBecauseTheGameHasStarted(deltaMS);
-        }
-    }
-
-    private final Rectangle playerRect = new Rectangle();
-    private final Rectangle otherRect = new Rectangle();
-    private final List<ObstacleSprite> toRemove = Lists.newArrayList();
-
-    private void doUpdateBecauseTheGameHasStarted(int deltaMS) {
-        playerRect.setBounds(playerSprite.layer.tx(), playerSprite.layer.ty(), playerSprite.layer.width(),
-                playerSprite.layer.height());
-        for (ObstacleSprite obstacle : obstacles) {
-            obstacle.update(deltaMS);
-            otherRect.setBounds(obstacle.layer.tx(), obstacle.layer.ty(), obstacle.layer.width(),
-                    obstacle.layer.height());
-            if (playerRect.intersects(otherRect)){
-                toRemove.add(obstacle);
-            }
-        }
-        while (!toRemove.isEmpty()) {
-            ObstacleSprite sprite = toRemove.remove(0);
-            obstacles.remove(sprite);
-            layer.remove(sprite.layer);
-        }
-
+        this.state.update(deltaMS);
     }
 
     @Override
@@ -145,12 +95,164 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         return game;
     }
 
+    private interface State extends Updateable {
+        void onEnter();
+
+        void onExit();
+
+        void pitchChanged(Float newPitch);
+    }
+
+    private abstract class AbstractState implements State {
+        @Override
+        public void onExit() {
+            // Do nothing
+        }
+
+        @Override
+        public void onEnter() {
+            // Do nothing
+        }
+
+        @Override
+        public void update(int deltaMS) {
+            // Do nothing
+        }
+
+        @Override
+        public void pitchChanged(Float newPitch) {
+            // Do nothing
+        }
+    }
+
+    @SuppressWarnings("FieldCanBeLocal")
+    private final AbstractState countdownState = new AbstractState() {
+        private Root startingMessageHud;
+        private Label countdownLabel = new Label();
+        private int timeRemaining;
+
+        @Override
+        public void update(int deltaMS) {
+            timeRemaining -= deltaMS;
+            if (timeRemaining <= 0) {
+                setState(new StartPitchState());
+            }
+            countdownLabel.setText(timeRemaining + "");
+        }
+
+        @Override
+        public void onEnter() {
+            timeRemaining = 2000;
+            if (startingMessageHud == null) {
+                startingMessageHud = iface.createRoot(new AbsoluteLayout(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+                        .setSize(game.plat.graphics().viewSize);
+                startingMessageHud.add(countdownLabel.setConstraint(AbsoluteLayout.uniform(BoxPoint.CENTER)));
+            }
+        }
+
+        @Override
+        public void onExit() {
+            startingMessageHud.setVisible(false);
+        }
+
+        @Override
+        public String toString() {
+            return "Countdown state";
+        }
+    };
+
+    private final class StartPitchState extends AbstractState {
+        private Root startingPitchHud;
+
+        @Override
+        public void onEnter() {
+            if (startingPitchHud == null) {
+                startingPitchHud = iface.createRoot(new AbsoluteLayout(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+                        .setSize(game.plat.graphics().viewSize);
+                startingPitchHud.add(new Label("Make a sound!").setConstraint(AbsoluteLayout.uniform(BoxPoint.CENTER)));
+            }
+            startingPitch.update(null);
+        }
+
+        @Override
+        public void pitchChanged(Float newPitch) {
+            if (newPitch != null) {
+                topPitch = newPitch + 100;
+                bottomPitch = newPitch - 100;
+                setState(new PlayingState());
+            }
+        }
+
+        @Override
+        public void onExit() {
+            startingPitchHud.setVisible(false);
+        }
+    }
+
+    private final class PlayingState extends AbstractState {
+        private final Rectangle playerRect = new Rectangle();
+        private final Rectangle otherRect = new Rectangle();
+        private final List<ObstacleSprite> toRemove = Lists.newArrayList();
+        private boolean shouldAnimateOnNextChange = true;
+
+        @Override
+        public void update(int deltaMS) {
+            playerRect.setBounds(playerSprite.layer.tx(), playerSprite.layer.ty(), playerSprite.layer.width(),
+                    playerSprite.layer.height());
+            for (ObstacleSprite obstacle : obstacles) {
+                obstacle.update(deltaMS);
+                otherRect.setBounds(obstacle.layer.tx(), obstacle.layer.ty(), obstacle.layer.width(),
+                        obstacle.layer.height());
+                if (playerRect.intersects(otherRect)) {
+                    toRemove.add(obstacle);
+                }
+            }
+            while (!toRemove.isEmpty()) {
+                ObstacleSprite sprite = toRemove.remove(0);
+                obstacles.remove(sprite);
+                layer.remove(sprite.layer);
+            }
+
+        }
+
+        @Override
+        public void pitchChanged(Float newPitch) {
+            if (newPitch==null) {
+                return; // TODO: Die.
+            }
+
+            if (shouldAnimateOnNextChange) {
+                shouldAnimateOnNextChange = false;
+
+                float screenHeight = game.plat.graphics().viewSize.height();
+                float pitchWidth = topPitch - bottomPitch;
+                float pitchPercent = clamp((newPitch - bottomPitch) / pitchWidth);
+                float newY = screenHeight - (screenHeight * pitchPercent);
+
+                iface.anim.tweenY(playerSprite.layer)
+                        .to(newY)
+                        .in(200)
+                        .then()
+                        .action(new Runnable() {
+                            @Override
+                            public void run() {
+                                shouldAnimateOnNextChange = true;
+                            }
+                        });
+            }
+        }
+
+        private float clamp(float value) {
+            return Math.max(0, Math.min(1.0f, value));
+        }
+    }
+
     private final class PitchLabel extends Label {
         PitchLabel() {
             game.pitch.connect(new Slot<Float>() {
                 @Override
                 public void onEmit(Float aFloat) {
-                    if (aFloat!=null) {
+                    if (aFloat != null) {
                         setText("Pitch: " + String.format("%2f", aFloat));
                     } else {
                         setText("--");
@@ -162,11 +264,12 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
 
     private final class StartingPitchLabel extends Label {
         private Connection connection;
-        StartingPitchLabel(){
+
+        StartingPitchLabel() {
             connection = game.pitch.connect(new Slot<Float>() {
                 @Override
                 public void onEmit(Float aFloat) {
-                    if (aFloat!=null) {
+                    if (aFloat != null) {
                         setText("Starting: " + String.format("%2f", aFloat));
                         connection.close();
                     }

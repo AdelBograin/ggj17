@@ -71,7 +71,7 @@ public class FlappyPitchGame extends SceneGame {
                         float probability = pitchDetectionResult.getProbability();
                         double rms = audioEvent.getRMS() * 100;
                         String message = String.format("Pitch detected at %.2fs: %.2fHz ( %.2f probability, RMS: %.5f )\n", timeStamp, pitch, probability, rms);
-                        plat.log().debug(message);
+                        //plat.log().debug(message);
                         FlappyPitchGame.this.pitch.update(pitch);
                     } else {
                         FlappyPitchGame.this.pitch.update(null);
@@ -79,7 +79,6 @@ public class FlappyPitchGame extends SceneGame {
                 }
             }));
             new Thread(dispatcher, "Audio dispatcher for " + mixer.getMixerInfo().getName()).start();
-            System.out.println("Thread started");
         } catch (LineUnavailableException lue) {
             lue.printStackTrace();
         }

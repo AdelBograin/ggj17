@@ -24,6 +24,8 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     private PlayerSprite playerSprite;
     private final List<ObstacleSprite> obstacles = Lists.newArrayList();
 
+    private boolean immortal = false;
+
     private float topPitch;
     private float bottomPitch;
     private State state;
@@ -35,7 +37,6 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         makeDefaultBackground();
         configurePlayerSprite();
         makeDebugHUD();
-        generateObstacles();
 
         setState(countdownState);
         game.pitch.connect(new Slot<Float>() {
@@ -56,14 +57,6 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     private void configurePlayerSprite() {
         playerSprite = new PlayerSprite(game);
         layer.addAt(playerSprite.layer, 50, game.plat.graphics().viewSize.height() / 2);
-    }
-
-    private void generateObstacles() {
-        for (int y = 10; y < game.plat.graphics().viewSize.height(); y += 95) {
-            ObstacleSprite obstacleSprite = new ObstacleSprite(game.plat.graphics());
-            obstacles.add(obstacleSprite);
-            layer.addAt(obstacleSprite.layer, game.plat.graphics().viewSize.width(), y);
-        }
     }
 
     private void setState(State newState) {
@@ -191,13 +184,24 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         private final Rectangle playerRect = new Rectangle();
         private final Rectangle otherRect = new Rectangle();
         private final List<ObstacleSprite> toRemove = Lists.newArrayList();
+        private final ObstacleGenerator generator = new ObstacleGenerator(game.plat.graphics(), layer);
         private boolean shouldAnimateOnNextChange = true;
         private int elapsedTimeWithoutPitch;
 
+        PlayingState() {
+            generator.onGenerate.connect(new Slot<ObstacleSprite>() {
+                @Override
+                public void onEmit(ObstacleSprite obstacleSprite) {
+                    obstacles.add(obstacleSprite);
+                }
+            });
+        }
+
         @Override
         public void update(int deltaMS) {
+            generator.update(deltaMS);
             elapsedTimeWithoutPitch += deltaMS;
-            if (elapsedTimeWithoutPitch >= MAX_ELAPSED_TIME_WITHOUT_DEATH) {
+            if (elapsedTimeWithoutPitch >= MAX_ELAPSED_TIME_WITHOUT_DEATH && !immortal) {
                 setState(new DeathState());
                 return;
             }
@@ -205,6 +209,9 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
                     playerSprite.layer.height());
             for (ObstacleSprite obstacle : obstacles) {
                 obstacle.update(deltaMS);
+                if (obstacle.layer.tx() + obstacle.layer.width() < 0) {
+                    toRemove.add(obstacle);
+                }
                 otherRect.setBounds(obstacle.layer.tx(), obstacle.layer.ty(), obstacle.layer.width(),
                         obstacle.layer.height());
                 if (playerRect.intersects(otherRect)) {

@@ -24,8 +24,6 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     private PlayerSprite playerSprite;
     private final List<ObstacleSprite> obstacles = Lists.newArrayList();
 
-    private boolean immortal = false;
-
     private float topPitch;
     private float bottomPitch;
     private State state;
@@ -201,7 +199,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         public void update(int deltaMS) {
             generator.update(deltaMS);
             elapsedTimeWithoutPitch += deltaMS;
-            if (elapsedTimeWithoutPitch >= MAX_ELAPSED_TIME_WITHOUT_DEATH && !immortal) {
+            if (elapsedTimeWithoutPitch >= MAX_ELAPSED_TIME_WITHOUT_DEATH && !game.immortal) {
                 setState(new DeathState());
                 return;
             }

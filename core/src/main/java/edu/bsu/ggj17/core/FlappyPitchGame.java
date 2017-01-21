@@ -7,6 +7,8 @@ import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
 import playn.core.Clock;
+import playn.core.Key;
+import playn.core.Keyboard;
 import playn.core.Platform;
 import playn.scene.Pointer;
 import playn.scene.SceneGame;
@@ -23,6 +25,8 @@ public class FlappyPitchGame extends SceneGame {
     private AudioDispatcher dispatcher;
     private final ScreenStack screenStack;
 
+    public boolean immortal = false;
+
     public FlappyPitchGame(final Platform plat) {
         super(plat, 33); // update our "simulation" 33ms (30 times per second)
         handleMixerChanges();
@@ -30,6 +34,15 @@ public class FlappyPitchGame extends SceneGame {
         screenStack = new ScreenStack(this, rootLayer);
         screenStack.push(new MenuScreen(this, screenStack));
         new Pointer(plat, rootLayer, true);
+
+        plat.input().keyboardEvents.connect(new Keyboard.KeySlot() {
+            @Override
+            public void onEmit(Keyboard.KeyEvent keyEvent) {
+                if (keyEvent.key.equals(Key.I)) {
+                    immortal = true;
+                }
+            }
+        });
     }
 
     private void handleMixerChanges() {

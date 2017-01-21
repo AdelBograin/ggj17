@@ -6,6 +6,7 @@ import be.tarsos.dsp.io.jvm.JVMAudioInputStream;
 import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
+import playn.core.Clock;
 import playn.core.Platform;
 import playn.scene.Pointer;
 import playn.scene.SceneGame;
@@ -20,12 +21,13 @@ public class FlappyPitchGame extends SceneGame {
     public final Value<Mixer> mixer = Value.create(AudioSystem.getMixer(AudioSystem.getMixerInfo()[0]));
     public final Value<Float> pitch = Value.create(0f);
     private AudioDispatcher dispatcher;
+    private final ScreenStack screenStack;
 
     public FlappyPitchGame(final Platform plat) {
         super(plat, 33); // update our "simulation" 33ms (30 times per second)
         handleMixerChanges();
         mixerChanged(mixer.get());
-        ScreenStack screenStack = new ScreenStack(this, rootLayer);
+        screenStack = new ScreenStack(this, rootLayer);
         screenStack.push(new MenuScreen(this, screenStack));
         new Pointer(plat, rootLayer, true);
     }
@@ -89,4 +91,12 @@ public class FlappyPitchGame extends SceneGame {
         }
     }
 
+    @Override
+    public void update(Clock clock) {
+        super.update(clock);
+        ScreenStack.Screen screen = screenStack.top();
+        if (screen instanceof Updateable) {
+            ((Updateable)screen).update(clock.dt);
+        }
+    }
 }

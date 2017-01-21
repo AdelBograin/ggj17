@@ -7,7 +7,7 @@ import tripleplay.util.Colors;
 
 public class PlayerSprite {
 
-    private ImageLayer layer;
+    public final ImageLayer layer;
 
     public PlayerSprite(FlappyPitchGame game) {
         Canvas canvas = game.plat.graphics().createCanvas(30,30);
@@ -17,7 +17,4 @@ public class PlayerSprite {
         layer.setOrigin(Layer.Origin.CENTER);
     }
 
-    public Layer layer() {
-        return layer;
-    }
 }

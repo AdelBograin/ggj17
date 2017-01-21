@@ -12,6 +12,7 @@ import tripleplay.ui.*;
 import tripleplay.ui.layout.AbsoluteLayout;
 import tripleplay.ui.layout.AxisLayout;
 import tripleplay.ui.util.BoxPoint;
+import tripleplay.util.Colors;
 
 import java.util.List;
 
@@ -284,18 +285,23 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
             if (root==null) {
                 root = iface.createRoot(AxisLayout.vertical(), SimpleStyles.newSheet(game.plat.graphics()), layer)
                         .setSize(game.plat.graphics().viewSize);
-                root.add(new Label("Now you must repeat!"), new Button("Play again").onClick(new Slot<Button>() {
+                Group group = new Group(AxisLayout.vertical());
+                group.setStyles(Style.BACKGROUND.is(Background.composite(
+                        Background.roundRect(game.plat.graphics(), Colors.WHITE, 6, Colors.BLACK, 0.2f)
+                                .inset(12,12))));
+                group.add(new Label("Now you must repeat!"), new Button("Play again").onClick(new Slot<Button>() {
                     @Override
                     public void onEmit(Button button) {
                         done.emit(EndOption.PLAY_AGAIN);
                     }
                 }));
-                root.add(new Button("Main Menu").onClick(new UnitSlot() {
+                group.add(new Button("Main Menu").onClick(new UnitSlot() {
                     @Override
                     public void onEmit() {
                         done.emit(EndOption.MAIN_MENU);
                     }
                 }));
+                root.add(group);
             }
         }
 

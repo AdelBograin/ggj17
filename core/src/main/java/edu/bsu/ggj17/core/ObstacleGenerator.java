@@ -1,8 +1,7 @@
 package edu.bsu.ggj17.core;
 
-import playn.core.Graphics;
+import playn.core.Platform;
 import playn.scene.GroupLayer;
-import pythagoras.f.MathUtil;
 import react.Signal;
 
 import java.util.Random;
@@ -16,11 +15,11 @@ public class ObstacleGenerator implements Updateable {
 
     private int millisUntilNextSpawn = MILLIS_BETWEEN_OBSTACLES;
     private final GroupLayer target;
-    private final Graphics graphics;
+    private final Platform plat;
 
-    public ObstacleGenerator(Graphics graphics, GroupLayer target) {
+    public ObstacleGenerator(Platform plat, GroupLayer target) {
         this.target = target;
-        this.graphics= graphics;
+        this.plat = plat;
     }
 
     @Override
@@ -33,9 +32,9 @@ public class ObstacleGenerator implements Updateable {
     }
 
     private void spawnObstacle() {
-        ObstacleSprite obstacleSprite = new ObstacleSprite(graphics);
-        float y = RANDOM.nextFloat() * graphics.viewSize.height();
-        target.addAt(obstacleSprite.layer, graphics.viewSize.width(), y);
+        ObstacleSprite obstacleSprite = new ObstacleSprite(plat.assets());
+        float y = RANDOM.nextFloat() * plat.graphics().viewSize.height();
+        target.addAt(obstacleSprite.layer, plat.graphics().viewSize.width(), y);
         onGenerate.emit(obstacleSprite);
     }
 

@@ -1,21 +1,16 @@
 package edu.bsu.ggj17.core;
 
-import playn.core.Canvas;
-import playn.core.Graphics;
+import playn.core.Assets;
 import playn.scene.ImageLayer;
 import playn.scene.Layer;
-import tripleplay.util.Colors;
 
 public class ObstacleSprite {
 
     private static final float SPEED_PPS = 150;
     public final Layer layer;
 
-    public ObstacleSprite(Graphics graphics) {
-        Canvas canvas = graphics.createCanvas(50,50);
-        canvas.setFillColor(Colors.BLUE);
-        canvas.fillRect(0,0,50,50);
-        this.layer = new ImageLayer(canvas.image);
+    public ObstacleSprite(Assets assets) {
+        this.layer = new ImageLayer(assets.getImage("images/quarter-rest.png"));
         this.layer.setOrigin(Layer.Origin.CENTER);
     }
 

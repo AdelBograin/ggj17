@@ -191,7 +191,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         private final Rectangle playerRect = new Rectangle();
         private final Rectangle otherRect = new Rectangle();
         private final List<ObstacleSprite> toRemove = Lists.newArrayList();
-        private final ObstacleGenerator generator = new ObstacleGenerator(game.plat.graphics(), layer);
+        private final ObstacleGenerator generator = new ObstacleGenerator(game.plat, layer);
         private boolean shouldAnimateOnNextChange = true;
         private int elapsedTimeWithoutPitch;
 

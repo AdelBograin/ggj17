@@ -10,12 +10,15 @@ import playn.core.Image;
 import playn.core.Platform;
 import playn.scene.ImageLayer;
 import playn.scene.SceneGame;
+import react.Slot;
+import react.Value;
 
 import javax.sound.sampled.*;
 
 public class FlappyPitchGame extends SceneGame implements PitchDetectionHandler {
 
     private Mixer mixer;
+    private Value<Float> pitch = Value.create(0f);
 
     public FlappyPitchGame(Platform plat) {
         super(plat, 33); // update our "simulation" 33ms (30 times per second)
@@ -27,8 +30,14 @@ public class FlappyPitchGame extends SceneGame implements PitchDetectionHandler 
         bgLayer.setSize(plat.graphics().viewSize);
         rootLayer.add(bgLayer);
 
-        PlayerSprite sprite = new PlayerSprite(this);
+        final PlayerSprite sprite = new PlayerSprite(this);
         rootLayer.addAt(sprite.layer(), 0, plat.graphics().viewSize.height() / 2);
+        pitch.connect(new Slot<Float>() {
+            @Override
+            public void onEmit(Float newPitch) {
+                sprite.layer().setTy(newPitch);
+            }
+        });
 
         initializeAudio();
     }
@@ -75,6 +84,7 @@ public class FlappyPitchGame extends SceneGame implements PitchDetectionHandler 
             double rms = audioEvent.getRMS() * 100;
             String message = String.format("Pitch detected at %.2fs: %.2fHz ( %.2f probability, RMS: %.5f )\n", timeStamp, pitch, probability, rms);
             plat.log().debug(message);
+            this.pitch.update(pitch);
         }
     }
 }

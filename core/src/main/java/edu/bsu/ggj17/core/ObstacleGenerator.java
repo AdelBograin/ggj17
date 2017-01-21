@@ -16,10 +16,14 @@ public class ObstacleGenerator implements Updateable {
     private int millisUntilNextSpawn = MILLIS_BETWEEN_OBSTACLES;
     private final GroupLayer target;
     private final Platform plat;
+    private final float maxY;
+    private final float minY;
 
     public ObstacleGenerator(Platform plat, GroupLayer target) {
         this.target = target;
         this.plat = plat;
+        this.maxY = plat.graphics().viewSize.height() - 25;
+        this.minY = 25;
     }
 
     @Override
@@ -35,6 +39,7 @@ public class ObstacleGenerator implements Updateable {
         AbstractObstacleSprite restSprite =
                 (RANDOM.nextFloat() < 0.5f) ? new EndBarSprite(plat.assets()) : new RestSprite(plat.assets());
         float y = RANDOM.nextFloat() * plat.graphics().viewSize.height();
+        y = Math.min(maxY, Math.max(minY, y));
         target.addAt(restSprite.layer, plat.graphics().viewSize.width(), y);
         onGenerate.emit(restSprite);
     }

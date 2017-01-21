@@ -14,6 +14,7 @@ public class PlayerSprite {
         canvas.setFillColor(Colors.BLACK);
         canvas.fillRect(0,0,30,30);
         layer = new ImageLayer(canvas.image);
+        layer.setOrigin(Layer.Origin.CENTER);
     }
 
     public Layer layer() {

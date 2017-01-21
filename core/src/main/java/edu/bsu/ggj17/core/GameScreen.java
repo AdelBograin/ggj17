@@ -1,9 +1,9 @@
 package edu.bsu.ggj17.core;
 
 import com.google.common.collect.Lists;
-import playn.core.Game;
-import playn.core.Image;
+import playn.core.*;
 import playn.scene.ImageLayer;
+import pythagoras.f.IDimension;
 import pythagoras.f.MathUtil;
 import pythagoras.f.Rectangle;
 import react.*;
@@ -83,7 +83,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
                 .setSize(game.plat.graphics().viewSize);
         root.add(new ScoreLabel()
                 .setConstraint(AbsoluteLayout.uniform(BoxPoint.TL))
-                .addStyles(Style.BACKGROUND.is(Background.solid(Colors.WHITE).inset(3,12,3,3))));
+                .addStyles(Style.BACKGROUND.is(Background.solid(Colors.WHITE).inset(3, 12, 3, 3))));
     }
 
     @Override
@@ -312,13 +312,34 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     private final class GraceState extends AbstractState {
 
         private final State previous;
+        private ImageLayer breatheLayer;
 
         GraceState(State previous) {
             this.previous = previous;
+
+            TextLayout layout = game.plat.graphics().layoutText("Breathe!", new TextFormat(
+                    new Font("Bold", 48f)));
+            Canvas canvas = game.plat.graphics().createCanvas(200, 50);
+            canvas.fillText(layout, 0, 0);
+            breatheLayer = new ImageLayer(canvas.image);
         }
 
         @Override
         public void onEnter() {
+            IDimension size = game.plat.graphics().viewSize;
+            breatheLayer.setAlpha(0);
+            layer.addCenterAt(breatheLayer, size.width() / 2, size.height() / 2);
+            iface.anim.tweenAlpha(breatheLayer)
+                    .to(1)
+                    .in(500)
+                    .easeIn()
+                    .then()
+                    .tweenAlpha(breatheLayer)
+                    .to(0)
+                    .in(500)
+                    .easeOut();
+
+
             iface.anim.tweenRotation(playerSprite.layer)
                     .from(0)
                     .to(MathUtil.TWO_PI)
@@ -330,6 +351,11 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
                             setState(previous);
                         }
                     });
+        }
+
+        @Override
+        public void onExit() {
+            layer.remove(breatheLayer);
         }
     }
 

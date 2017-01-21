@@ -1,5 +1,6 @@
 package edu.bsu.ggj17.core;
 
+import playn.core.Font;
 import playn.core.Game;
 import react.Slot;
 import react.UnitSlot;
@@ -26,10 +27,12 @@ public class MenuScreen extends ScreenStack.UIScreen {
             }
         });
 
-        Root root = iface.createRoot(AxisLayout.vertical(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+        Root root = iface.createRoot(AxisLayout.vertical(), GameStyles.newSheet(game.plat.graphics()), layer)
                 .setSize(game.plat.graphics().viewSize);
 
-        root.add(new Label("AN UNNAMED GAME").setStyles(Style.COLOR.is(Colors.WHITE)),
+        Font font = new Font("Bold", 40);
+
+        root.add(new Label("Fermata, or, Don't Breathe").setStyles(Style.COLOR.is(Colors.WHITE), Style.FONT.is(font)),
                 new Button("Play").onClick(new UnitSlot() {
                     @Override
                     public void onEmit() {

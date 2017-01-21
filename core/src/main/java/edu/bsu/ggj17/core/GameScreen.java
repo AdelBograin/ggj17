@@ -36,9 +36,9 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         this.game = game;
 
         makeDefaultBackground();
-        configurePlayerSprite();
         makeDebugHUD();
         makeHud();
+        configurePlayerSprite();
 
         setState(countdownState);
         game.pitch.connect(new Slot<Float>() {
@@ -70,7 +70,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     }
 
     private void makeDebugHUD() {
-        Root root = iface.createRoot(new AbsoluteLayout(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+        Root root = iface.createRoot(new AbsoluteLayout(), GameStyles.newSheet(game.plat.graphics()), layer)
                 .setSize(game.plat.graphics().viewSize);
         root.add(new Group(AxisLayout.vertical())
                 .add(new PitchLabel(),
@@ -79,9 +79,11 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
     }
 
     private void makeHud() {
-        Root root = iface.createRoot(new AbsoluteLayout(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+        Root root = iface.createRoot(new AbsoluteLayout(), GameStyles.newSheet(game.plat.graphics()), layer)
                 .setSize(game.plat.graphics().viewSize);
-        root.add(new ScoreLabel().setConstraint(AbsoluteLayout.uniform(BoxPoint.TR)));
+        root.add(new ScoreLabel()
+                .setConstraint(AbsoluteLayout.uniform(BoxPoint.TL))
+                .addStyles(Style.BACKGROUND.is(Background.solid(Colors.WHITE).inset(3,12,3,3))));
     }
 
     @Override
@@ -143,7 +145,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         public void onEnter() {
             timeRemaining = 2000;
             if (startingMessageHud == null) {
-                startingMessageHud = iface.createRoot(new AbsoluteLayout(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+                startingMessageHud = iface.createRoot(new AbsoluteLayout(), GameStyles.newSheet(game.plat.graphics()), layer)
                         .setSize(game.plat.graphics().viewSize);
                 startingMessageHud.add(countdownLabel.setConstraint(AbsoluteLayout.uniform(BoxPoint.CENTER)));
             }
@@ -166,7 +168,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         @Override
         public void onEnter() {
             if (startingPitchHud == null) {
-                startingPitchHud = iface.createRoot(new AbsoluteLayout(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+                startingPitchHud = iface.createRoot(new AbsoluteLayout(), GameStyles.newSheet(game.plat.graphics()), layer)
                         .setSize(game.plat.graphics().viewSize);
                 startingPitchHud.add(new Label("Make a sound!").setConstraint(AbsoluteLayout.uniform(BoxPoint.CENTER)));
             }
@@ -244,7 +246,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
 
         @Override
         public void pitchChanged(Float newPitch) {
-            if (newPitch!=null) {
+            if (newPitch != null) {
                 elapsedTimeWithoutPitch = 0;
             } else {
                 return;
@@ -276,19 +278,19 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         }
     }
 
-    private final class DeathState extends AbstractState{
+    private final class DeathState extends AbstractState {
 
         private Root root;
 
         @Override
         public void onEnter() {
-            if (root==null) {
-                root = iface.createRoot(AxisLayout.vertical(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+            if (root == null) {
+                root = iface.createRoot(AxisLayout.vertical(), GameStyles.newSheet(game.plat.graphics()), layer)
                         .setSize(game.plat.graphics().viewSize);
                 Group group = new Group(AxisLayout.vertical());
                 group.setStyles(Style.BACKGROUND.is(Background.composite(
                         Background.roundRect(game.plat.graphics(), Colors.WHITE, 6, Colors.BLACK, 0.2f)
-                                .inset(12,12))));
+                                .inset(12, 12))));
                 group.add(new Label("Now you must repeat!"), new Button("Play again").onClick(new Slot<Button>() {
                     @Override
                     public void onEmit(Button button) {
@@ -308,7 +310,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
 
     }
 
-    private final class GraceState extends AbstractState{
+    private final class GraceState extends AbstractState {
 
         private final State previous;
 

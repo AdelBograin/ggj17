@@ -26,7 +26,7 @@ public class ConfigScreen extends ScreenStack.UIScreen {
         super(game.plat);
         this.game = Preconditions.checkNotNull(game);
 
-        Root root = iface.createRoot(AxisLayout.vertical(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+        Root root = iface.createRoot(AxisLayout.vertical(), GameStyles.newSheet(game.plat.graphics()), layer)
                 .setSize(game.plat.graphics().viewSize);
 
         root.add(new Label("MIXER").setStyles(Style.COLOR.is(Colors.WHITE)));

@@ -1,6 +1,7 @@
 package edu.bsu.ggj17.core;
 
 import playn.core.Game;
+import react.Slot;
 import react.UnitSlot;
 import tripleplay.game.ScreenStack;
 import tripleplay.game.trans.FadeTransition;
@@ -32,7 +33,27 @@ public class MenuScreen extends ScreenStack.UIScreen {
                 new Button("Play").onClick(new UnitSlot() {
                     @Override
                     public void onEmit() {
-                        screenStack.push(new GameScreen(game), new FadeTransition().duration(500));
+                        startNewGame(true);
+                    }
+
+                    private void startNewGame(boolean first) {
+                        GameScreen gameScreen = new GameScreen(game);
+                        gameScreen.done.connect(new Slot<EndOption>() {
+                            @Override
+                            public void onEmit(EndOption endOption) {
+                                if (endOption == EndOption.PLAY_AGAIN) {
+                                    startNewGame(false);
+                                }
+                                else {
+                                    screenStack.popTo(MenuScreen.this);
+                                }
+                            }
+                        });
+                        if (first) {
+                            screenStack.push(gameScreen, new FadeTransition().duration(500));
+                        } else {
+                            screenStack.replace(gameScreen, new FadeTransition().duration(500));
+                        }
                     }
                 }),
                 new Button("Configure").onClick(new UnitSlot() {

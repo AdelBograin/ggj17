@@ -5,14 +5,9 @@ import playn.core.Game;
 import playn.core.Image;
 import playn.scene.ImageLayer;
 import pythagoras.f.Rectangle;
-import react.Connection;
-import react.Slot;
-import react.Value;
+import react.*;
 import tripleplay.game.ScreenStack;
-import tripleplay.ui.Group;
-import tripleplay.ui.Label;
-import tripleplay.ui.Root;
-import tripleplay.ui.SimpleStyles;
+import tripleplay.ui.*;
 import tripleplay.ui.layout.AbsoluteLayout;
 import tripleplay.ui.layout.AxisLayout;
 import tripleplay.ui.util.BoxPoint;
@@ -21,6 +16,9 @@ import java.util.List;
 
 public class GameScreen extends ScreenStack.UIScreen implements Updateable {
 
+    private static final int MAX_ELAPSED_TIME_WITHOUT_DEATH = 500;
+
+    public final Signal<EndOption> done = Signal.create();
     private final FlappyPitchGame game;
     private final Value<Float> startingPitch = Value.create(null);
     private PlayerSprite playerSprite;
@@ -194,9 +192,15 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         private final Rectangle otherRect = new Rectangle();
         private final List<ObstacleSprite> toRemove = Lists.newArrayList();
         private boolean shouldAnimateOnNextChange = true;
+        private int elapsedTimeWithoutPitch;
 
         @Override
         public void update(int deltaMS) {
+            elapsedTimeWithoutPitch += deltaMS;
+            if (elapsedTimeWithoutPitch >= MAX_ELAPSED_TIME_WITHOUT_DEATH) {
+                setState(new DeathState());
+                return;
+            }
             playerRect.setBounds(playerSprite.layer.tx(), playerSprite.layer.ty(), playerSprite.layer.width(),
                     playerSprite.layer.height());
             for (ObstacleSprite obstacle : obstacles) {
@@ -217,8 +221,10 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
 
         @Override
         public void pitchChanged(Float newPitch) {
-            if (newPitch==null) {
-                return; // TODO: Die.
+            if (newPitch!=null) {
+                elapsedTimeWithoutPitch = 0;
+            } else {
+                return;
             }
 
             if (shouldAnimateOnNextChange) {
@@ -245,6 +251,33 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         private float clamp(float value) {
             return Math.max(0, Math.min(1.0f, value));
         }
+    }
+
+    private final class DeathState extends AbstractState{
+
+        private Root root;
+
+        @Override
+        public void onEnter() {
+            if (root==null) {
+                root = iface.createRoot(AxisLayout.vertical(), SimpleStyles.newSheet(game.plat.graphics()), layer)
+                        .setSize(game.plat.graphics().viewSize);
+                root.add(new Label("YOU DIED"), new Button("Play again").onClick(new Slot<Button>() {
+                    @Override
+                    public void onEmit(Button button) {
+                        done.emit(EndOption.PLAY_AGAIN);
+                    }
+                }));
+                root.add(new Button("Main Menu").onClick(new UnitSlot() {
+                    @Override
+                    public void onEmit() {
+                        done.emit(EndOption.MAIN_MENU);
+                    }
+                }));
+            }
+        }
+
+
     }
 
     private final class PitchLabel extends Label {

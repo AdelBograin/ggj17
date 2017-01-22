@@ -39,7 +39,7 @@ import javax.sound.sampled.*;
 
 public class FlappyPitchGame extends SceneGame {
 
-    public final Value<Mixer> mixer = Value.create(AudioSystem.getMixer(AudioSystem.getMixerInfo()[0]));
+    public final Value<Mixer> mixer = Value.create(findFirstWorkingMixer());
     public final Value<Float> pitch = Value.create(0f);
     public final boolean debugMode;
     private AudioDispatcher dispatcher;
@@ -53,19 +53,35 @@ public class FlappyPitchGame extends SceneGame {
         handleMixerChanges();
         mixerChanged(mixer.get());
         screenStack = new ScreenStack(this, rootLayer);
-        screenStack.push(new MenuScreen(this, screenStack));
-        new Pointer(plat, rootLayer, true);
+        if (mixer.get() == null) {
+            screenStack.push(new NoMixerScreen(this));
+        } else {
+            screenStack.push(new MenuScreen(this, screenStack));
+            new Pointer(plat, rootLayer, true);
 
-        if (debugMode) {
-            plat.input().keyboardEvents.connect(new Keyboard.KeySlot() {
-                @Override
-                public void onEmit(Keyboard.KeyEvent keyEvent) {
-                    if (keyEvent.key.equals(Key.I)) {
-                        immortal = true;
+            if (debugMode) {
+                plat.input().keyboardEvents.connect(new Keyboard.KeySlot() {
+                    @Override
+                    public void onEmit(Keyboard.KeyEvent keyEvent) {
+                        if (keyEvent.key.equals(Key.I)) {
+                            immortal = true;
+                        }
                     }
-                }
-            });
+                });
+            }
         }
+    }
+
+    private Mixer findFirstWorkingMixer() {
+        Mixer result = null;
+        for (Mixer.Info info : AudioSystem.getMixerInfo()) {
+            try {
+                result = AudioSystem.getMixer(info);
+                break;
+            } catch (Exception ignored) {
+            }
+        }
+        return result;
     }
 
     private void handleMixerChanges() {
@@ -78,7 +94,10 @@ public class FlappyPitchGame extends SceneGame {
     }
 
     private void mixerChanged(Mixer mixer) {
-        plat.log().debug("Mixer changed to " + mixer);
+        if (mixer==null) {
+            plat.log().warn("Mixer is null, no mixer here");
+            return;
+        }
         stopPreviousDispatcherAsNecessary();
         float sampleRate = 44100;
         int bufferSize = 1024;

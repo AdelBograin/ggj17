@@ -50,8 +50,12 @@ public class MenuScreen extends ScreenStack.UIScreen {
                 .setSize(game.plat.graphics().viewSize);
 
         Font font = new Font("Bold", 40);
+        Font smaller = new Font("Bold", 22);
 
-        root.add(new Label("Fermata, or, Don't Breathe").setStyles(Style.COLOR.is(Colors.WHITE), Style.FONT.is(font)),
+        root.add(new Label("Fermata").setStyles(Style.COLOR.is(Colors.WHITE), Style.FONT.is(font)),
+                new Label("or").setStyles(Style.COLOR.is(Colors.WHITE), Style.FONT.is(smaller)),
+                new Label("Don't Breathe").setStyles(Style.COLOR.is(Colors.WHITE), Style.FONT.is(font)),
+                new Shim(12,12),
                 new Button("Play").onClick(new UnitSlot() {
                     @Override
                     public void onEmit() {

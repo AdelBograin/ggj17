@@ -1,0 +1,10 @@
+language: java
+jdk: oraclejdk8
+before_install:
+- sudo apt-get update && sudo apt-get install oracle-java8-installer
+
+script: bash ./deploy.sh
+env:
+  global:
+  - ENCRYPTION_LABEL: "73e63c22e7c3"
+  - COMMIT_AUTHOR_EMAIL: "travis@travis-ci.org"

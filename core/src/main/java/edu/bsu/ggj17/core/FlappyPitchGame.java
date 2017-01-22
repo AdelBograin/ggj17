@@ -131,6 +131,9 @@ public class FlappyPitchGame extends SceneGame {
             new Thread(dispatcher, "Audio dispatcher for " + mixer.getMixerInfo().getName()).start();
         } catch (LineUnavailableException lue) {
             lue.printStackTrace();
+        } catch (Exception e) {
+            plat.log().warn("Problem accessing line.");
+            e.printStackTrace();
         }
     }
 

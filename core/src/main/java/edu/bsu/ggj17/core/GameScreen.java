@@ -55,7 +55,9 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         this.game = game;
 
         makeDefaultBackground();
-        makeDebugHUD();
+        if (game.debugMode) {
+            makeDebugHUD();
+        }
         makeHud();
         configurePlayerSprite();
 

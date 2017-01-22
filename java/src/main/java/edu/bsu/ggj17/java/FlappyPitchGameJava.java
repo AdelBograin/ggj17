@@ -19,6 +19,7 @@
 
 package edu.bsu.ggj17.java;
 
+import org.apache.commons.cli.*;
 import playn.java.JavaPlatform;
 import playn.java.LWJGLPlatform;
 
@@ -28,14 +29,34 @@ import java.awt.*;
 
 public class FlappyPitchGameJava {
 
+    private static final String DEBUG_FLAG = "debug";
+
+    private static boolean debugMode = false;
+
     public static void main(String[] args) {
+        processCommandLine(args);
         LWJGLPlatform.Config config = new LWJGLPlatform.Config();
         config.width = 800;
         config.height = 600;
         LWJGLPlatform plat = new LWJGLPlatform(config);
-        new FlappyPitchGame(plat);
+        new FlappyPitchGame(plat, debugMode);
         registerFonts(plat);
         plat.start();
+    }
+
+    private static void processCommandLine(String[] args) {
+        try {
+            Options options = new Options();
+            options.addOption(DEBUG_FLAG, "Enable debug mode");
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+            if (cmd.hasOption("debug")) {
+                debugMode = true;
+            }
+        } catch (ParseException pe) {
+            System.out.println("Unrecognized command line");
+            pe.printStackTrace();
+        }
     }
 
     private static void registerFonts(JavaPlatform plat) {

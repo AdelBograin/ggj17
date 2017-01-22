@@ -33,18 +33,27 @@ public class MenuScreen extends ScreenStack.UIScreen {
 
     private final FlappyPitchGame game;
     private final ConfigScreen configScreen;
+    private final AboutScreen aboutScreen;
 
     public MenuScreen(final FlappyPitchGame game, final ScreenStack screenStack) {
         super(game.plat);
         this.game = game;
 
-        this.configScreen = new ConfigScreen(game);
+        configScreen = new ConfigScreen(game);
         configScreen.done.connect(new UnitSlot() {
             @Override
             public void onEmit() {
                 screenStack.popTo(MenuScreen.this, screenStack.slide().right());
             }
         });
+        aboutScreen = new AboutScreen(game);
+        aboutScreen.done.connect(new UnitSlot() {
+            @Override
+            public void onEmit() {
+                screenStack.popTo(MenuScreen.this, screenStack.slide().right());
+            }
+        });
+
 
         Root root = iface.createRoot(AxisLayout.vertical(), GameStyles.newSheet(game.plat.graphics()), layer)
                 .setSize(game.plat.graphics().viewSize);
@@ -80,6 +89,12 @@ public class MenuScreen extends ScreenStack.UIScreen {
                         } else {
                             screenStack.replace(gameScreen, new FadeTransition().duration(500));
                         }
+                    }
+                }),
+                new Button("About").onClick(new UnitSlot() {
+                    @Override
+                    public void onEmit() {
+                        screenStack.push(aboutScreen, screenStack.slide().left());
                     }
                 }),
                 new Button("Configure").onClick(new UnitSlot() {

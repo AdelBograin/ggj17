@@ -60,6 +60,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         }
         makeHud();
         configurePlayerSprite();
+        configureStarBar();
 
         setState(countdownState);
         game.pitch.connect(new Slot<Float>() {
@@ -70,6 +71,7 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
         });
     }
 
+
     private void makeDefaultBackground() {
         Image bgImage = game.plat.assets().getImage("images/bg.png");
         ImageLayer bgLayer = new ImageLayer(bgImage);
@@ -79,7 +81,13 @@ public class GameScreen extends ScreenStack.UIScreen implements Updateable {
 
     private void configurePlayerSprite() {
         playerSprite = new PlayerSprite(game);
-        layer.addAt(playerSprite.layer, 50, game.plat.graphics().viewSize.height() / 2);
+        layer.addAt(playerSprite.layer, 75, game.plat.graphics().viewSize.height() / 2);
+    }
+
+    private void configureStarBar() {
+        StartBarSprite startBarSprite = new StartBarSprite(game.plat.assets());
+        obstacles.add(startBarSprite);
+        layer.addAt(startBarSprite.layer, 30, game.plat.graphics().viewSize.height() /2);
     }
 
     private void setState(State newState) {

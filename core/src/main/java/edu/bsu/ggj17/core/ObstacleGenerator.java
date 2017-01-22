@@ -32,7 +32,7 @@ public class ObstacleGenerator implements Updateable {
 
     public final Signal<AbstractObstacleSprite> onGenerate = Signal.create();
 
-    private int millisUntilNextSpawn = MILLIS_BETWEEN_OBSTACLES;
+    private int millisUntilNextSpawn = 0;
     private final GroupLayer target;
     private final Platform plat;
     private final float maxY;
